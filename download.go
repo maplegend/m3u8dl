@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	tmpSfx          = ".tmp"
+	tmpSfx          = ".ts"
 	queueLenDelta   = 16
 	aes128BlockSize = 16
 )
@@ -28,6 +28,7 @@ const (
 type job struct {
 	id      uint64
 	url     string
+	name 	string
 	key, iv []byte
 }
 
@@ -82,10 +83,10 @@ func download(pl *m3u8.MediaPlaylist) error {
 				}
 			}
 		}
-
 		seg := job{
 			id:  seg.SeqId,
 			url: *flagBaseURL + seg.URI,
+			name: seg.URI,
 			key: lastKey,
 			iv:  lastIV,
 		}
@@ -170,7 +171,7 @@ func dlWorker(id int, jobs <-chan job, wg *sync.WaitGroup) {
 				}
 			}
 
-			out, err := os.Create(filepath.Join(*flagTmpDir, strconv.Itoa(int(seg.id))+tmpSfx))
+			out, err := os.Create(filepath.Join(*flagTmpDir, seg.name))
 			if err != nil {
 				logErr.Printf("seg %d create temp file error: %v\n", seg.id, err)
 				segIn.Close()

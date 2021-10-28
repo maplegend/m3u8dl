@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"strings"
 )
 
 var httpClient = &http.Client{}
@@ -14,5 +15,9 @@ func httpGet(url string) (resp *http.Response, err error) {
 		return
 	}
 	req.Header.Set("User-Agent", *flagUA)
+	for _, h := range flagHeaders {
+		header := strings.Split(h, ": ")
+		req.Header.Set(header[0], header[1])
+	}
 	return httpClient.Do(req)
 }

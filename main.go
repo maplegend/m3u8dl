@@ -10,6 +10,17 @@ import (
 
 const defaultUA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36"
 
+type arrayFlags []string
+
+func (i *arrayFlags) String() string {
+	return strings.Join(*i, " ")
+}
+
+func (i *arrayFlags) Set(value string) error {
+	*i = append(*i, value)
+	return nil
+}
+
 var (
 	logger = log.New(os.Stdout, "", log.LstdFlags)
 	logErr = log.New(os.Stderr, "", log.LstdFlags)
@@ -25,10 +36,13 @@ var (
 	flagRaw     = flag.Bool("raw", false, "Don't attempt to decrypt. Usually you should also turn on nomerge")
 	flagNoMerge = flag.Bool("nomerge", false, "Don't attempt to merge segments (segments stay in the tmp directory)")
 	flagRetry   = flag.Int("retry", 3, "retry `num` times after failure")
+    flagHeaders arrayFlags
 )
 var customKey []byte
 
 func main() {
+	flag.Var(&flagHeaders, "h", "Header for server requests, format `key: value`")
+
 	flag.Parse()
 
 	if !*flagNoMerge && *flagOutput == "" {

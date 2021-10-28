@@ -5,6 +5,7 @@ import (
 	"io"
 	"m3u8dl/utils"
 	"os"
+	"path/filepath"
 
 	"github.com/grafov/m3u8"
 )
@@ -16,7 +17,19 @@ func decode(input string) (*m3u8.MediaPlaylist, error) {
 		if err != nil {
 			return nil, err
 		}
-		m3u8In = resp.Body
+		//m3u8In = resp.Body
+		path:=filepath.Join(*flagTmpDir, "playlist.m3u8")
+		f, e := os.Create(path)
+		if e != nil {
+			panic(e)
+		}
+		defer f.Close()
+		//f.ReadFrom(resp.Body)
+		io.Copy(f, resp.Body)
+		m3u8In, err = os.Open(path)
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		var err error
 		m3u8In, err = os.Open(input)
