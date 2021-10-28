@@ -6,9 +6,15 @@ import json
 import os
 import shutil
 
-def download_ep(base_url, ep):
+def download_ep(base_url, ep, server, res):
     main_page = requests.get(base_url+str(ep)).content.decode('utf-8')
-    securl = re.findall('embedUrl\": \"(.*)?\"', main_page)[0]
+    if server == 'mcloud':
+        referer = 'https://mcloud.to/'
+        securl = re.findall('data-embed=\"(.*?)\"', main_page)[1]
+        print(securl)
+    else:
+        referer = 'https://vidstream.pro/'
+        securl = re.findall('embedUrl\": \"(.*)?\"', main_page)[0]
     player = requests.get(securl, headers = {'referer': 'https://'+urlparse(base_url).netloc+'/'}).content.decode('utf-8')
     key = re.findall('window.skey = \'(.*?)\'', player)[0]
     thridurl = securl.replace('/e/', '/info/') + '&skey=' + key
@@ -16,12 +22,12 @@ def download_ep(base_url, ep):
     data = json.loads(last_page)
     url = data['media']['sources'][0]['file']
     print(url)
-    url = url.replace('list.m3u8', 'hls/1080/1080.m3u8')
+    url = url.replace('list.m3u8', 'hls/' + res + '/' + res + '.m3u8')
     tmp_dir = './'+str(ep)
     if os.path.exists(tmp_dir):
         shutil.rmtree(tmp_dir)
     os.mkdir(tmp_dir)
-    go_code = os.system('go run . -i ' + url + ' -thread 16 -h "referer: https://vidstream.pro/" -t ' + str(ep) + ' -nomerge -t '+ tmp_dir)
+    go_code = os.system('go run . -i ' + url + ' -thread 16 -h "referer: ' + referer +'" -t ' + str(ep) + ' -nomerge -t '+ tmp_dir)
     print(go_code)
     if go_code != 0:
         print("cant download", ep)
@@ -34,8 +40,16 @@ def main():
     base_url = sys.argv[1]
     start_ep = sys.argv[2]
     max_episodes = sys.argv[3]
+    if len(sys.argv) >= 5:
+        res = sys.argv[4]
+    else:
+        res = '1080'
+    if len(sys.argv) >= 6:
+        server = sys.argv[5]
+    else:
+        server = 'vidstream'
     for i in range(int(start_ep), int(max_episodes)+1):
-        download_ep(base_url, i)
+        download_ep(base_url, i, server, res)
 
     print("finished")
 

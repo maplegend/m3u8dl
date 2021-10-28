@@ -149,6 +149,10 @@ func dlWorker(id int, jobs <-chan job, wg *sync.WaitGroup) {
 					continue
 				}
 				req.Header.Set("User-Agent", *flagUA)
+				for _, h := range flagHeaders {
+					header := strings.Split(h, ": ")
+					req.Header.Set(header[0], header[1])
+				}
 				resp, err := dlClient.Do(req)
 				if err != nil {
 					logErr.Printf("download seg %d from %s error: %v\n", seg.id, seg.url, err)
