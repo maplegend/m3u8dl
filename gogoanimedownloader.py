@@ -5,9 +5,10 @@ from urllib.parse import urlparse
 import json
 import os
 import shutil
+import argparse
 
 
-def download_ep(base_url, ep, server, res):
+def download_ep(base_url, ep, server, res, binary_path):
     main_page = requests.get(base_url+str(ep)).content.decode('utf-8')
     base_domain = urlparse(base_url).netloc
     if server == 'mcloud':
@@ -29,7 +30,7 @@ def download_ep(base_url, ep, server, res):
     if os.path.exists(tmp_dir):
         shutil.rmtree(tmp_dir)
     os.mkdir(tmp_dir)
-    go_code = os.system('go run . -i ' + url + ' -thread 16 -h "referer: ' + referer +'" -t ' + str(ep) + ' -nomerge -t '+ tmp_dir)
+    go_code = os.system((binary_path if binary_path else 'go run .') + ' -i ' + url + ' -thread 16 -h "referer: ' + referer +'" -t ' + str(ep) + ' -nomerge -t '+ tmp_dir)
     print(go_code)
     if go_code != 0:
         print("cant download", ep)
@@ -40,19 +41,17 @@ def download_ep(base_url, ep, server, res):
 
 
 def main():
-    base_url = sys.argv[1]
-    start_ep = sys.argv[2]
-    max_episodes = sys.argv[3]
-    if len(sys.argv) >= 5:
-        res = sys.argv[4]
-    else:
-        res = '1080'
-    if len(sys.argv) >= 6:
-        server = sys.argv[5]
-    else:
-        server = 'vidstream'
-    for i in range(int(start_ep), int(max_episodes)+1):
-        download_ep(base_url, i, server, res)
+    parser = argparse.ArgumentParser(description='HLS stream downloader')
+    parser.add_argument('url', metavar='URL', type=str, help='page url, should be without ep number like https://gogoanime.be/watch/leviathan-the-last-defense-dub-dJnX-episode-')
+    parser.add_argument('--start', '-f', type=int, default=1, help='from which ep start downloading')
+    parser.add_argument('--end', '-l', type=int, default=1, help='on which ep stop downloading')
+    parser.add_argument('--server', '-s', type=str, default='vidstream', help='which streaming service to use, vidstream or mcloud')
+    parser.add_argument('--res', '-r', type=str, default='1080', help='which resolution to use')
+    parser.add_argument('--downloader_path', '-p', type=str, default='', help='path to go m3u8 downloader binary if empty downloader will be compiled from src in current dir')
+    args = parser.parse_args()
+
+    for i in range(int(args.start), int(args.end)+1):
+        download_ep(args.url, i, args.server, args.res, args.downloader_path)
 
     print("finished")
 
