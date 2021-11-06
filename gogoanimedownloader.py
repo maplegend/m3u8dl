@@ -26,7 +26,8 @@ def download_ep(base_url, ep, server, res, binary_path):
     url = data['media']['sources'][0]['file']
     print(url)
     url = url.replace('list.m3u8', 'hls/' + res + '/' + res + '.m3u8')
-    tmp_dir = './'+str(ep)
+    wd = os.path.dirname(os.path.realpath(__file__))
+    tmp_dir = os.path.join(wd, str(ep))
     if os.path.exists(tmp_dir):
         shutil.rmtree(tmp_dir)
     os.mkdir(tmp_dir)
@@ -35,7 +36,11 @@ def download_ep(base_url, ep, server, res, binary_path):
     if go_code != 0:
         print("cant download", ep)
         return
-    ffmpeg_code = os.system('ffmpeg -i {} -acodec copy -bsf:a aac_adtstoasc -vcodec copy {}'.format(os.path.join(tmp_dir, "playlist.m3u8"), str(ep)+".mp4"))
+    os.chdir(tmp_dir)
+    epname = "_".join(base_url.split('/')[-1:][0].split("-")[:-3])+"_ep_"+str(ep)+".mp4"
+    ffmpeg_code = os.system('ffmpeg -i {} -acodec copy -bsf:a aac_adtstoasc -vcodec copy {}'.format(os.path.join(tmp_dir, "playlist.m3u8"), epname))
+    shutil.copy2(epname, wd)
+    os.chdir(wd)
     print(ffmpeg_code)
     shutil.rmtree(tmp_dir)
 
